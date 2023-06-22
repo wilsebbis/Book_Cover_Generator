@@ -2,6 +2,7 @@ import openai
 import confidential
 import requests
 from PIL import Image
+import re
 
 openai.api_key = confidential.openai_api_key
 
@@ -134,8 +135,34 @@ def func(num, desc):
     blank_even_larger.save(confidential.Final_Image + str(num) + ".png", 'PNG')
 
 def main():
-    description = "An epic fantasy painting montage of a vase with roses on it, a laminated wooden baseball bat, an old rusty treasure chest, and a grand pirate ship with tattered sails."
-    for i in range(10):
-        func(i, description)
-        
+    num = input('How many covers would you like to make? ')
+    for i in range(int(num)):
+        text = 'Create a list of 10 examples of sentences like this: they start with "An epic fantasy painting montage of" followed by three objects. For example, "An epic fantasy painting montage of a vase with roses on it, an old rusty treasure chest, and a grand pirate ship with tattered sails." or "An epic fantasy painting montage of a saloon, a horse, and a cowboy."'
+        while True:
+            try:
+                response = openai.ChatCompletion.create(
+                    model = "gpt-3.5-turbo-16k",
+                    messages = [{"role" : "user", "content": text}],
+                    temperature = 0.8,
+                    max_tokens = 12000,
+                )
+            except openai.error.RateLimitError:
+                print("Rate Limit Error")
+                continue
+            except openai.error.InvalidRequestError:
+                print("Invalid Request Error (too many tokens)")
+                most_tokens -= 100
+                continue
+            except openai.error.APIError:
+                print("API Error: probably bad gateway")
+                continue
+            except openai.error.ServiceUnavailableError:
+                    print("openai.error.ServiceUnavailableError")
+                    continue
+            break
+        script = response.choices[0].message["content"]
+        for j in re.split("[0-9]+\.", script):
+            if(len(j) > 1 and j.startswith(" An epic fantasy painting")):
+                func(i, j)
+
 main()

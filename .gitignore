@@ -163,6 +163,7 @@ cython_debug/
 
 
 /Final_Images
-/Images 
+/Temporary_Images 
+/Images
 confidential.py
 .DS_Store
